@@ -1,4 +1,4 @@
-# use following code
+# ref code
 # https://github.com/guacomolia/ptr_net/blob/master/generate_data.py
 
 import numpy as np
@@ -20,7 +20,7 @@ def generate_single_seq(length = 30, min_len=5, max_len=10):
     seq = seq + ([0] * (length - len(seq)))
     return (seq, len(seq_before), len(seq_before) + len(seq_during)-1)
 
-
+# Sequence tasks
 def generate_set_seq(N):
     """Generates a set of N sequences of fixed length"""
     data = []
@@ -33,8 +33,13 @@ def generate_set_seq(N):
         ends.append(ind_end)
     return data, starts, ends
 
-
-
-if __name__ == "__main__":
-    data, starts, ends = generate_set_seq(5)
+# Boundary tasks
+def make_seq_data(n_samples, seq_len):
+    data, labels = [], []
+    for _ in range(n_samples):
+        input = np.random.permutation(range(seq_len)).tolist()
+        target = sorted(range(len(input)), key=lambda k: input[k])
+        data.append(input)
+        labels.append(target)
+    return data, labels
 
