@@ -16,13 +16,10 @@ The task is a toy task of [this site](https://medium.com/@devnag/pointer-network
 
 $ python boundary_train.py
 epoch: 0, Loss: 0.28288
-acc
 Acc: 98.79% (8891/9000)
 epoch: 2, Loss: 0.00291
-acc
 Acc: 99.96% (8996/9000)
 epoch: 4, Loss: 0.00091
-acc
 Acc: 100.00% (9000/9000)
 ----Test result---
 Acc: 100.00% (1000/1000)
