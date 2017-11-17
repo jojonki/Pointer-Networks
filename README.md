@@ -1,7 +1,7 @@
 # Pointer-Networks
 
 Pointer Networks
-Oriol Vinyals, Meire Fortunato, Navdeep Jaitly
+Oriol Vinyals, Meire Fortunato, Navdeep Jaitly.  
 https://arxiv.org/abs/1506.03134
 
 **Pointer Networks** is a new neural architecture to learn the conditional probability of an output sequence with elements that are discrete tokens corresponding to positions in an input sequence.
