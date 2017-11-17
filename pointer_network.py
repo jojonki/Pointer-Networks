@@ -5,10 +5,9 @@ import torch.nn.functional as F
 from utils import to_var
 
 class PointerNetwork(nn.Module):
-    def __init__(self, input_size, emb_size, weight_size, batch_size, seq_len, answer_seq_len, hidden_size=512):
+    def __init__(self, input_size, emb_size, weight_size, seq_len, answer_seq_len, hidden_size=512):
         super(PointerNetwork, self).__init__()
 
-        self.batch_size = batch_size
         self.hidden_size = hidden_size
         self.input_size = input_size 
         self.answer_seq_len = answer_seq_len
@@ -26,14 +25,15 @@ class PointerNetwork(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, input):
+        batch_size = input.size(0)
         input = self.emb(input) # (N, L, embd_size)
         # Encoding
         encoder_states, hc = self.enc(input) # encoder_state: (N, L, H)
         encoder_states = encoder_states.transpose(1, 0) # (L, N, H)
 
         # Decoding states initialization
-        decoder_input = to_var(torch.Tensor(self.batch_size, self.emb_size).zero_()) # (N, embd_size)
-        hidden = to_var(torch.randn([self.batch_size, self.hidden_size]))            # (N, h)
+        decoder_input = to_var(torch.Tensor(batch_size, self.emb_size).zero_()) # (N, embd_size)
+        hidden = to_var(torch.randn([batch_size, self.hidden_size]))            # (N, h)
         cell_state = encoder_states[-1]                                              # (N, h)
 
         probs = []

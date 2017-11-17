@@ -1,4 +1,3 @@
-# Reference: https://github.com/guacomolia/ptr_net
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
@@ -11,12 +10,11 @@ import random
 from pointer_network import PointerNetwork
 
 total_size = 10000
-weight_size = 256                           # W
+weight_size = 256
 emb_size = 32
-batch_size = 250                            # B
-n_batches = total_size // batch_size        # NB
-answer_seq_len = 2                          # M = 2
-n_epochs = 100                              # NE
+batch_size = 250
+answer_seq_len = 2
+n_epochs = 5
 
 dataset, starts, ends = generate_data.generate_set_seq(total_size)
 targets = np.vstack((starts, ends)).T  # [total_size, M]
@@ -26,59 +24,74 @@ input_seq_len = dataset.shape[1]
 inp_size = 11
 
 # Convert to torch tensors
-input = to_var(torch.LongTensor(dataset))     # [total_size, L]
-targets = to_var(torch.LongTensor(targets))   # [total_size, 2]
+input = to_var(torch.LongTensor(dataset))     # (N, L)
+targets = to_var(torch.LongTensor(targets))   # (N, 2)
 
-train_batches = input.view(n_batches, batch_size, input_seq_len) # [NB, B, L]
-targets = targets.view(n_batches, batch_size, answer_seq_len) # [NB, B, 2]
+data_split = (int)(total_size * 0.9)
+train_X = input[:data_split]
+train_Y = targets[:data_split]
+test_X = input[data_split:]
+test_Y = targets[data_split:]
 
 # from pointer_network import PointerNetwork
-def train(n_epochs, model, train_batches, targets):
+def train(model, X, Y, batch_size, n_epochs):
     model.train()
     optimizer = optim.Adam(model.parameters())
+    N = X.size(0)
+    L = X.size(1)
+    M = Y.size(1)
     for epoch in range(n_epochs + 1):
-        for i in range(len(train_batches)):
-            input = train_batches[i] # [B, L, 2]
-            target = targets[i] # [B, M]
+        # for i in range(len(train_batches))
+        for i in range(0, N-batch_size, batch_size):
+            x = X[i:i+batch_size] # (B, L)
+            y = Y[i:i+batch_size] # (B, M)
+
+            probs = model(x) # (L, B, M)
+            outputs = probs.view(L, -1).t().contiguous() # (B*M, L)
+            y = y.view(-1) # (B*M)
+            loss = F.nll_loss(outputs, y)
 
             optimizer.zero_grad()
-
-            L = input.data.shape[1]
-            probs = model(input) # (L, N, M)
-            probs = probs.view(L, -1).t().contiguous() # (N*M, L)
-            target = target.view(-1) # (N*M)
-            loss = F.nll_loss(probs, target)
             loss.backward()
             optimizer.step()
 
-        pick = np.random.randint(0, batch_size)
         if epoch % 2 == 0:
-            print('epoch: {}\t\t -- loss: {:.5f}'.format(epoch, loss.data[0]))
-            print("trained ", probs.max(1)[1].data[pick], probs.max(1)[1].data[2*pick],
-                  "target : ", target.data[pick], target.data[2*pick])
+            print('epoch: {}, Loss: {:.5f}'.format(epoch, loss.data[0]))
+            # for _ in range(2): # random showing results
+            #     pick = np.random.randint(0, batch_size)
+            #     probs = probs.contiguous().view(batch_size, M, L).transpose(2, 1) # (N, L, M)
+            #     y = y.view(batch_size, M)
+            #     print("predict: ", probs.max(1)[1].data[pick][0], probs.max(1)[1].data[pick][1],
+            #           "target  : ", y.data[pick][0], y.data[pick][1])
+            print('acc')
+            test(model, X, Y)
 
-def predict(model, data):
-    outputs = model(data) # (L, N, M)
-    outputs = outputs.transpose(1, 0) # (N, L, M)
-    outputs = outputs.transpose(2, 1) # (N, M, L)
-    _v, indices = torch.max(outputs, 2) # indices: (N, M)
+def get_indices(probs):
+    # Input: probs   (L, N, M)
+    # Out  : indices (N, M)
+    probs = probs.transpose(1, 0) # (N, L, M)
+    probs = probs.transpose(2, 1) # (N, M, L)
+    _v, indices = torch.max(probs, 2) # indices: (N, M)
     return indices
 
-def test(model):
-    # Predictions
-    test_id = random.randint(0, batch_size-1)
-    test_data = train_batches[0] # (N, L)
-    test_targets = targets[0] # (N, M)
-    indices = predict(model, test_data) # (N, M)
-    for i in range(len(indices)):
-        print('-----')
-        print('test', [v for v in test_data[i].data])
-        print('label', [v for v in test_targets[i].data])
-        print('pred', [v for v in indices[i].data])
-        if i>20: break
+def test(model, X, Y):
+    probs = model(X) # (L, N, M)
+    indices = get_indices(probs)
+    # show test examples
+    # for i in range(len(indices)):
+    #     print('-----')
+    #     print('test', [v for v in X[i].data])
+    #     print('label', [v for v in Y[i].data])
+    #     print('pred', [v for v in indices[i].data])
+    #     if torch.equal(Y[i].data, indices[i].data):
+    #         print('eq')
+    #     if i>20: break
+    correct_count = sum([1 if torch.equal(ind.data, y.data) else 0 for ind, y in zip(indices, Y)])
+    print('Acc: {:.2f}% ({}/{})'.format(correct_count/len(X)*100, correct_count, len(X)))
 
-model = PointerNetwork(inp_size, emb_size, weight_size, batch_size, input_seq_len, answer_seq_len)
+model = PointerNetwork(inp_size, emb_size, weight_size, input_seq_len, answer_seq_len)
 if torch.cuda.is_available():
     model.cuda()
-train(10, model, train_batches, targets)
-test(model)
+train(model, train_X, train_Y, batch_size, n_epochs)
+print('----Test result---')
+test(model, test_X, test_Y)

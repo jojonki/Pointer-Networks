@@ -1,3 +1,6 @@
+# use following code
+# https://github.com/guacomolia/ptr_net/blob/master/generate_data.py
+
 import numpy as np
 import random
 
