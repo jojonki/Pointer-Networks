@@ -63,7 +63,6 @@ def train(model, X, Y, batch_size, n_epochs):
             #     y = y.view(batch_size, M)
             #     print("predict: ", probs.max(1)[1].data[pick][0], probs.max(1)[1].data[pick][1],
             #           "target  : ", y.data[pick][0], y.data[pick][1])
-            print('acc')
             test(model, X, Y)
 
 def get_indices(probs):
