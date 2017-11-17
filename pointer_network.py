@@ -1,8 +1,6 @@
 # Reference: https://github.com/guacomolia/ptr_net
 import torch
-from torch.autograd import Variable
 import torch.nn as nn
-# from torch import optim
 import torch.nn.functional as F
 from utils import to_var
 
@@ -34,9 +32,9 @@ class PointerNetwork(nn.Module):
         encoder_states = encoder_states.transpose(1, 0) # (L, N, H)
 
         # Decoding states initialization
-        decoder_input = to_var(torch.Tensor(self.batch_size, self.emb_size).zero_())      # (N, embd_size)
-        hidden = to_var(torch.randn([self.batch_size, self.hidden_size]))                 # (N, h)
-        cell_state = encoder_states[-1]                                                   # (N, h)
+        decoder_input = to_var(torch.Tensor(self.batch_size, self.emb_size).zero_()) # (N, embd_size)
+        hidden = to_var(torch.randn([self.batch_size, self.hidden_size]))            # (N, h)
+        cell_state = encoder_states[-1]                                              # (N, h)
 
         probs = []
         # Decoding
@@ -54,4 +52,3 @@ class PointerNetwork(nn.Module):
         probs = torch.stack(probs, dim=2)           # (L, N, M)
 
         return F.log_softmax(probs)
-
