@@ -79,7 +79,7 @@ def test(model, X, Y):
     correct_count = sum([1 if torch.equal(ind.data, y.data) else 0 for ind, y in zip(indices, Y)])
     print('Acc: {:.2f}% ({}/{})'.format(correct_count/len(X)*100, correct_count, len(X)))
 
-model = PointerNetwork(inp_size, emb_size, weight_size, input_seq_len, answer_seq_len)
+model = PointerNetwork(inp_size, emb_size, weight_size, answer_seq_len)
 if torch.cuda.is_available():
     model.cuda()
 train(model, train_X, train_Y, batch_size, n_epochs)

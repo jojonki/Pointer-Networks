@@ -6,14 +6,13 @@ from utils import to_var
 
 
 class PointerNetwork(nn.Module):
-    def __init__(self, input_size, emb_size, weight_size, seq_len, answer_seq_len, hidden_size=512, is_GRU=False):
+    def __init__(self, input_size, emb_size, weight_size, answer_seq_len, hidden_size=512, is_GRU=True):
         super(PointerNetwork, self).__init__()
 
         self.hidden_size = hidden_size
         self.input_size = input_size
         self.answer_seq_len = answer_seq_len
         self.weight_size = weight_size
-        self.seq_len = seq_len
         self.emb_size = emb_size
         self.is_GRU = is_GRU
 
