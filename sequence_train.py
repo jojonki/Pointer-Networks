@@ -36,12 +36,13 @@ def train(model, X, Y, batch_size, n_epochs):
     for epoch in range(n_epochs + 1):
         # for i in range(len(train_batches))
         for i in range(0, N-batch_size, batch_size):
-            x = X[i:i+batch_size] # (B, L)
-            y = Y[i:i+batch_size] # (B, M)
+            x = X[i:i+batch_size] # (bs, L)
+            y = Y[i:i+batch_size] # (bs, M)
 
-            probs = model(x) # (L, B, M)
-            outputs = probs.view(L, -1).t().contiguous() # (B*M, L)
-            y = y.view(-1) # (B*M)
+            probs = model(x) # (bs, M, L)
+            outputs = probs.view(-1, L) # (bs*M, L)
+            # outputs = probs.view(L, -1).t().contiguous() # (bs*M, L)
+            y = y.view(-1) # (bs*M)
             loss = F.nll_loss(outputs, y)
 
             optimizer.zero_grad()
@@ -52,25 +53,16 @@ def train(model, X, Y, batch_size, n_epochs):
             print('epoch: {}, Loss: {:.5f}'.format(epoch, loss.data[0]))
             # for _ in range(2): # random showing results
             #     pick = np.random.randint(0, batch_size)
-            #     probs = probs.contiguous().view(batch_size, M, L).transpose(2, 1) # (N, L, M)
+            #     probs = probs.contiguous().view(batch_size, M, L).transpose(2, 1) # (bs, L, M)
             #     y = y.view(batch_size, M)
             #     print("predict: ", probs.max(1)[1].data[pick][0], probs.max(1)[1].data[pick][1],
             #           "target  : ", y.data[pick][0], y.data[pick][1])
             test(model, X, Y)
 
 
-def get_indices(probs):
-    # Input: probs   (L, N, M)
-    # Out  : indices (N, M)
-    probs = probs.transpose(1, 0) # (N, L, M)
-    probs = probs.transpose(2, 1) # (N, M, L)
-    _v, indices = torch.max(probs, 2) # indices: (N, M)
-    return indices
-
-
 def test(model, X, Y):
-    probs = model(X) # (L, N, M)
-    indices = get_indices(probs)
+    probs = model(X) # (bs, M, L)
+    _v, indices = torch.max(probs, 2) # (bs, M)
     # show test examples
     # for i in range(len(indices)):
     #     print('-----')

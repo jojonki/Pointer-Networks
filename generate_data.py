@@ -4,7 +4,8 @@
 import numpy as np
 import random
 
-def generate_single_seq(length = 30, min_len=5, max_len=10):
+
+def generate_single_seq(length=30, min_len=5, max_len=10):
     # https://medium.com/@devnag/pointer-networks-in-tensorflow-with-sample-code-14645063f264
     """ Generates a sequence of numbers of random length and inserts a sub-sequence oh greater numbers at random place
     Input:
@@ -20,8 +21,9 @@ def generate_single_seq(length = 30, min_len=5, max_len=10):
     seq = seq + ([0] * (length - len(seq)))
     return (seq, len(seq_before), len(seq_before) + len(seq_during)-1)
 
-# Sequence tasks
+
 def generate_set_seq(N):
+    # generate Boundary tasks
     """Generates a set of N sequences of fixed length"""
     data = []
     starts = []
@@ -33,8 +35,9 @@ def generate_set_seq(N):
         ends.append(ind_end)
     return data, starts, ends
 
-# Boundary tasks
+
 def make_seq_data(n_samples, seq_len):
+    # Boundary tasks
     data, labels = [], []
     for _ in range(n_samples):
         input = np.random.permutation(range(seq_len)).tolist()
@@ -42,4 +45,3 @@ def make_seq_data(n_samples, seq_len):
         data.append(input)
         labels.append(target)
     return data, labels
-

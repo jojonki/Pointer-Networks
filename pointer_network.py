@@ -27,37 +27,30 @@ class PointerNetwork(nn.Module):
 
     def forward(self, input):
         batch_size = input.size(0)
-        L = input.size(1)
-        input = self.emb(input) # (N, L, embd_size)
+        input = self.emb(input) # (bs, L, embd_size)
 
         # Encoding
-        encoder_states, hc = self.enc(input) # encoder_state: (N, L, H)
-        encoder_states = encoder_states.transpose(1, 0) # (L, N, H)
+        encoder_states, hc = self.enc(input) # encoder_state: (bs, L, H)
+        encoder_states = encoder_states.transpose(1, 0) # (L, bs, H)
 
         # Decoding states initialization
-        decoder_input = to_var(torch.Tensor(batch_size, self.emb_size).zero_()) # (N, embd_size)
-        hidden = to_var(torch.randn([batch_size, self.hidden_size]))            # (N, h)
-        cell_state = encoder_states[-1]                                              # (N, h)
+        decoder_input = to_var(torch.Tensor(batch_size, self.emb_size).zero_()) # (bs, embd_size)
+        hidden = to_var(torch.randn([batch_size, self.hidden_size]))            # (bs, h)
+        cell_state = encoder_states[-1]                                         # (bs, h)
 
         probs = []
         # Decoding
         for i in range(self.answer_seq_len): # range(M)
-            hidden, cell_state = self.dec(decoder_input, (hidden, cell_state)) # (N, h), (N, h)
+            hidden, cell_state = self.dec(decoder_input, (hidden, cell_state)) # (bs, h), (bs, h)
 
             # Compute blended representation at each decoder time step
-            blend1 = self.W1(encoder_states)        # (L, N, W)
-            blend2 = self.W2(hidden)                # (N, W)
-            blend_sum = self.tanh(blend1 + blend2)  # (L, N, W)
-            out = self.vt(blend_sum)                # (L, N, 1)
-            out = torch.squeeze(out)                # (L, N)
-            out = F.log_softmax(out.t().contiguous()).t().contiguous()
+            blend1 = self.W1(encoder_states)          # (L, bs, W)
+            blend2 = self.W2(hidden)                  # (bs, W)
+            blend_sum = self.tanh(blend1 + blend2)    # (L, bs, W)
+            out = self.vt(blend_sum).squeeze()        # (L, bs)
+            out = F.log_softmax(out.t().contiguous()) # (bs, L)
             probs.append(out)
 
-        probs = torch.stack(probs, dim=2)           # (L, N, M)
-        # probs = torch.stack(probs, dim=1)           # (L, M, N)
-        # probs = probs.transpose(2, 0).contiguous() # (N, M, L)
-        # probs = F.log_softmax(probs.view(-1, L)) # (NM, L)
-        # probs = probs.view(batch_size, -1, L)
+        probs = torch.stack(probs, dim=1)           # (bs, M, L)
 
-        # return F.log_softmax(probs)
         return probs
