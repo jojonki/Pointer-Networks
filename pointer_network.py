@@ -4,19 +4,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 from utils import to_var
 
+
 class PointerNetwork(nn.Module):
     def __init__(self, input_size, emb_size, weight_size, seq_len, answer_seq_len, hidden_size=512):
         super(PointerNetwork, self).__init__()
 
         self.hidden_size = hidden_size
-        self.input_size = input_size 
+        self.input_size = input_size
         self.answer_seq_len = answer_seq_len
-        self.weight_size = weight_size 
+        self.weight_size = weight_size
         self.seq_len = seq_len
-        self.emb_size = emb_size 
+        self.emb_size = emb_size
 
         self.emb = nn.Embedding(input_size, emb_size)  # embed inputs
-        self.enc = nn.LSTM(emb_size, hidden_size, batch_first=True) 
+        self.enc = nn.LSTM(emb_size, hidden_size, batch_first=True)
         self.dec = nn.LSTMCell(emb_size, hidden_size)
         self.W1 = nn.Linear(hidden_size, weight_size) # blending encoder
         self.W2 = nn.Linear(hidden_size, weight_size) # blending decoder
@@ -26,7 +27,9 @@ class PointerNetwork(nn.Module):
 
     def forward(self, input):
         batch_size = input.size(0)
+        L = input.size(1)
         input = self.emb(input) # (N, L, embd_size)
+
         # Encoding
         encoder_states, hc = self.enc(input) # encoder_state: (N, L, H)
         encoder_states = encoder_states.transpose(1, 0) # (L, N, H)
@@ -47,8 +50,14 @@ class PointerNetwork(nn.Module):
             blend_sum = self.tanh(blend1 + blend2)  # (L, N, W)
             out = self.vt(blend_sum)                # (L, N, 1)
             out = torch.squeeze(out)                # (L, N)
+            out = F.log_softmax(out.t().contiguous()).t().contiguous()
             probs.append(out)
 
         probs = torch.stack(probs, dim=2)           # (L, N, M)
+        # probs = torch.stack(probs, dim=1)           # (L, M, N)
+        # probs = probs.transpose(2, 0).contiguous() # (N, M, L)
+        # probs = F.log_softmax(probs.view(-1, L)) # (NM, L)
+        # probs = probs.view(batch_size, -1, L)
 
-        return F.log_softmax(probs)
+        # return F.log_softmax(probs)
+        return probs
