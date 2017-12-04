@@ -1,12 +1,9 @@
 import torch
-from torch.autograd import Variable
-import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
 import numpy as np
 import generate_data
 from utils import to_var
-import random
 from pointer_network import PointerNetwork
 
 total_size = 10000
@@ -33,13 +30,14 @@ train_Y = targets[:data_split]
 test_X = input[data_split:]
 test_Y = targets[data_split:]
 
+
 # from pointer_network import PointerNetwork
 def train(model, X, Y, batch_size, n_epochs):
     model.train()
     optimizer = optim.Adam(model.parameters())
     N = X.size(0)
     L = X.size(1)
-    M = Y.size(1)
+    # M = Y.size(1)
     for epoch in range(n_epochs + 1):
         # for i in range(len(train_batches))
         for i in range(0, N-batch_size, batch_size):
@@ -65,6 +63,7 @@ def train(model, X, Y, batch_size, n_epochs):
             #           "target  : ", y.data[pick][0], y.data[pick][1])
             test(model, X, Y)
 
+
 def get_indices(probs):
     # Input: probs   (L, N, M)
     # Out  : indices (N, M)
@@ -72,6 +71,7 @@ def get_indices(probs):
     probs = probs.transpose(2, 1) # (N, M, L)
     _v, indices = torch.max(probs, 2) # indices: (N, M)
     return indices
+
 
 def test(model, X, Y):
     probs = model(X) # (L, N, M)
