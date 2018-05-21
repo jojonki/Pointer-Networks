@@ -54,7 +54,7 @@ class PointerNetwork(nn.Module):
             blend2 = self.W2(hidden)                  # (bs, W)
             blend_sum = F.tanh(blend1 + blend2)    # (L, bs, W)
             out = self.vt(blend_sum).squeeze()        # (L, bs)
-            out = F.log_softmax(out.t().contiguous()) # (bs, L)
+            out = F.log_softmax(out.transpose(0, 1).contiguous(), -1) # (bs, L)
             probs.append(out)
 
         probs = torch.stack(probs, dim=1)           # (bs, M, L)
