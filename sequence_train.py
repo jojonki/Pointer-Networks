@@ -50,7 +50,7 @@ def train(model, X, Y, batch_size, n_epochs):
             optimizer.step()
 
         if epoch % 2 == 0:
-            print('epoch: {}, Loss: {:.5f}'.format(epoch, loss.data[0]))
+            print('epoch: {}, Loss: {:.5f}'.format(epoch, loss.item()))
             # for _ in range(2): # random showing results
             #     pick = np.random.randint(0, batch_size)
             #     probs = probs.contiguous().view(batch_size, M, L).transpose(2, 1) # (bs, L, M)
