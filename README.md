@@ -1,4 +1,4 @@
-# Pointer-Networks
+# Pointer-Networks (unofficial)
 
 Pointer Networks
 Oriol Vinyals, Meire Fortunato, Navdeep Jaitly.  
